@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "GitPilot",
+  "version": "0.1.0",
+  "description": "AI-powered commit messages and PR descriptions",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["https://github.com/*"],
+  "background": {
+    "service_worker": "src/background/service-worker.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*"],
+      "js": ["src/content/github.ts"]
+    }
+  ],
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "GitPilot"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["auth-callback.html"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
