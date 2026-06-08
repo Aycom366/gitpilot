@@ -10,6 +10,8 @@ import { GenerateModule } from './generate/generate.module';
 import { config } from './config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 
+console.info('config.databaseUrl', config.databaseUrl);
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),

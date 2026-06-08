@@ -22,7 +22,7 @@ export class UsageDaily {
   @Column({ type: 'date' })
   date: string; // 'YYYY-MM-DD'
 
-  @Column()
+  @Column({ type: 'varchar' })
   type: GenerationType;
 
   @Column({ default: 0 })

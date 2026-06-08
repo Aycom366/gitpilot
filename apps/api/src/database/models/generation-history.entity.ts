@@ -22,22 +22,22 @@ export class GenerationHistory {
   })
   user: User;
 
-  @Column()
+  @Column({ type: 'varchar' })
   type: GenerationType;
 
-  @Column()
+  @Column({ type: 'varchar' })
   provider: ProviderName;
 
-  @Column()
+  @Column({ type: 'varchar' })
   model: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   inputTokens: number | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   outputTokens: number | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   platform: Platform | null;
 
   @CreateDateColumn()

@@ -21,27 +21,27 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   @Exclude() // not exposed via API
   passwordHash: string | null;
 
-  @Column({ unique: true, nullable: true })
+  @Column({ type: 'varchar', unique: true, nullable: true })
   githubId: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   githubUsername: string | null;
 
-  @Column({ default: 'free' })
+  @Column({ type: 'varchar', default: 'free' })
   tier: 'free' | 'byok';
 
-  @Column({ default: 'google' })
+  @Column({ type: 'varchar', default: 'google' })
   preferredProvider: 'google' | 'anthropic' | 'openai';
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   encryptedApiKey: string | null;
 
   @Exclude() // not exposed via API
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   apiKeyIv: string | null;
 
   @OneToMany(() => UsageDaily, (usage) => usage.user)
