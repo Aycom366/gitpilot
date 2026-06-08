@@ -1,19 +1,40 @@
-import browser from 'webextension-polyfill';
+import browser from "webextension-polyfill";
 
-export async function getAccessToken(): Promise<string | null> {
-  const result = await browser.storage.local.get('accessToken');
-  return (result.accessToken as string) ?? null;
+// In-memory cache — populated by initAuth() on popup mount.
+// Sync getters let createApiClient work without modification.
+let _accessToken = "";
+let _refreshToken = "";
+
+/** Call this once on popup mount before rendering authenticated UI. */
+export async function initAuth(): Promise<void> {
+  const result = await browser.storage.local.get([
+    "accessToken",
+    "refreshToken",
+  ]);
+  _accessToken = (result.accessToken as string) ?? "";
+  _refreshToken = (result.refreshToken as string) ?? "";
 }
 
-export async function setTokens(accessToken: string, refreshToken: string) {
-  await browser.storage.local.set({ accessToken, refreshToken });
+export function getToken(): string {
+  return _accessToken;
 }
 
-export async function clearTokens() {
-  await browser.storage.local.remove(['accessToken', 'refreshToken']);
+export function getRefreshToken(): string {
+  return _refreshToken;
 }
 
-export async function isLoggedIn(): Promise<boolean> {
-  const token = await getAccessToken();
-  return !!token;
+export function setTokens(accessToken: string, refreshToken: string): void {
+  _accessToken = accessToken;
+  _refreshToken = refreshToken;
+  void browser.storage.local.set({ accessToken, refreshToken });
+}
+
+export function removeTokens(): void {
+  _accessToken = "";
+  _refreshToken = "";
+  void browser.storage.local.remove(["accessToken", "refreshToken"]);
+}
+
+export function isLoggedIn(): boolean {
+  return !!_accessToken;
 }

@@ -1,3 +1,6 @@
-// shadcn components will be added here via: npx shadcn@latest add <component>
-// then re-exported from this file for use across web and extension apps
 export { cn } from './lib/utils';
+export { Button } from './components/button';
+export { Badge } from './components/badge';
+export { FormInput } from './components/forms/form-input';
+export type { ButtonProps } from './components/button';
+export type { BadgeProps } from './components/badge';

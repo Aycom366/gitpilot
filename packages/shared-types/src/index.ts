@@ -55,3 +55,15 @@ export interface UsageToday {
   limit: number;
   today: Partial<Record<GenerationType, number>>;
 }
+
+// User
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  tier: Tier;
+  preferredProvider: ProviderName;
+  githubUsername: string | null;
+  hasApiKey: boolean;
+  createdAt: string;
+}

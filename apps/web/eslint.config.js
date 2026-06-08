@@ -19,6 +19,16 @@ export default defineConfig([
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
     ],
+    rules: {
+      // TanStack Router route files export `Route` via createFileRoute alongside page components
+      'react-refresh/only-export-components': [
+        'error',
+        {
+          allowConstantExport: true,
+          extraHOCs: ['createFileRoute', 'createRootRoute', 'createRootRouteWithContext'],
+        },
+      ],
+    },
     languageOptions: {
       globals: globals.browser,
       parserOptions: {

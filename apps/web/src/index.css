@@ -1,2 +1,27 @@
-@import "@gitpilot/ui/globals.css";
-@source "../../packages/ui/src";
+@import "tailwindcss";
+
+/* Scan shared UI package so its Tailwind classes aren't purged */
+@source "../../../packages/ui/src";
+
+@theme {
+  --font-sans: 'Montserrat', sans-serif;
+}
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  body {
+    background-color: #09090b;
+    color: #fafafa;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: 'Montserrat', sans-serif;
+  }
+}
