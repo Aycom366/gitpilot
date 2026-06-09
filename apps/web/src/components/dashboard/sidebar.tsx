@@ -43,17 +43,22 @@ export function Sidebar() {
 
   return (
     <aside className='w-60 shrink-0 flex flex-col bg-zinc-900 border-r border-zinc-800'>
-      <div className='h-16 flex items-center gap-2 px-5 border-b border-zinc-800'>
+      <Link
+        to='/'
+        className='h-16 flex items-center gap-2 px-5 border-b border-zinc-800'
+      >
         <GitCommitHorizontal className='h-5 w-5 text-violet-400' />
         <span className='text-lg font-bold text-white'>GitPilot</span>
-      </div>
+      </Link>
 
       <nav className='flex-1 py-4 px-3 space-y-1'>
         {navItems.map(({ to, label, icon: Icon, ...rest }) => (
           <Link
             key={to}
             to={to}
-            activeOptions={"exact" in rest && rest.exact ? { exact: true } : undefined}
+            activeOptions={
+              "exact" in rest && rest.exact ? { exact: true } : undefined
+            }
             activeProps={{
               className:
                 "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-violet-600/20 text-violet-300",

@@ -1,5 +1,4 @@
 import { createApiClient } from "@gitpilot/api-client";
-import type { AxiosResponse } from "axios";
 import {
   initAuth,
   getToken,
@@ -47,19 +46,13 @@ chrome.runtime.onMessage.addListener(
     if (message.type === "OTT_RECEIVED") {
       // Re-init auth after OTT exchange so cache is fresh
       apiClient
-        .post("/auth/exchange", { ott: message.ott })
-        .then(
-          (
-            response: AxiosResponse<{
-              accessToken: string;
-              refreshToken: string;
-            }>,
-          ) => {
-            const data = response.data;
-            setTokens(data.accessToken, data.refreshToken);
-            console.log("[GitPilot] Extension linked via OTT");
-          },
-        )
+        .post<{ accessToken: string; refreshToken: string }>("/auth/exchange", {
+          ott: message.ott,
+        })
+        .then((data) => {
+          setTokens(data.accessToken, data.refreshToken);
+          console.log("[GitPilot] Extension linked via OTT");
+        })
         .catch((err: Error) =>
           console.error("[GitPilot] OTT exchange failed", err),
         );

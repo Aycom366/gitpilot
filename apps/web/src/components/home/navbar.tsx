@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "@gitpilot/ui";
 import { GitCommitHorizontal } from "lucide-react";
+import { isLoggedIn } from "../../lib/auth";
 
 export function Navbar() {
   return (
@@ -25,14 +26,22 @@ export function Navbar() {
           </a>
         </div>
         <div className='flex items-center gap-3'>
-          <Link to='/auth/login'>
-            <Button variant='ghost' size='sm'>
-              Log in
-            </Button>
-          </Link>
-          <Link to='/auth/register'>
-            <Button size='sm'>Get started</Button>
-          </Link>
+          {isLoggedIn() ? (
+            <Link to='/dashboard'>
+              <Button size='sm'>Dashboard</Button>
+            </Link>
+          ) : (
+            <>
+              <Link to='/auth/login'>
+                <Button variant='ghost' size='sm'>
+                  Log in
+                </Button>
+              </Link>
+              <Link to='/auth/register'>
+                <Button size='sm'>Get started</Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>

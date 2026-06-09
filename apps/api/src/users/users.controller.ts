@@ -9,6 +9,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../database/models/user.entity';
@@ -23,13 +24,7 @@ export class UsersController {
 
   @Get('me')
   me(@Req() req: Request) {
-    const user = req.user as User;
-    // Strip sensitive fields before returning
-    const { encryptedApiKey, ...safe } = user;
-    return {
-      ...safe,
-      hasApiKey: !!encryptedApiKey,
-    };
+    return plainToInstance(User, req.user);
   }
 
   @Put('me')

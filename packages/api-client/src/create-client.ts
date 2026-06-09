@@ -1,4 +1,25 @@
-import axios, { type AxiosInstance } from "axios";
+import axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
+
+/** Axios instance where response interceptor has already unwrapped response.data */
+export interface UnwrappedAxiosInstance {
+  get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>;
+  post<T = unknown>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<T>;
+  put<T = unknown>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<T>;
+  patch<T = unknown>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<T>;
+  delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>;
+}
 
 export interface TokenFns {
   getToken: () => string;
@@ -12,7 +33,7 @@ export interface TokenFns {
 export function createApiClient(
   baseURL: string,
   tokenFns: TokenFns,
-): AxiosInstance {
+): UnwrappedAxiosInstance {
   const {
     getToken,
     getRefreshToken,
@@ -32,7 +53,10 @@ export function createApiClient(
   client.interceptors.response.use(
     (response) => response.data,
     async (error) => {
-      if (error.response?.status === 401) {
+      // Skip refresh logic for auth endpoints — their 401s are meaningful
+      // (wrong credentials, expired OTT, etc.) and should propagate as-is.
+      const url: string = error.config?.url ?? "";
+      if (error.response?.status === 401 && !url.includes("/auth/")) {
         const refreshToken = getRefreshToken();
         if (!refreshToken) {
           removeTokens();
@@ -55,5 +79,5 @@ export function createApiClient(
     },
   );
 
-  return client;
+  return client as unknown as UnwrappedAxiosInstance;
 }

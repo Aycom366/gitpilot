@@ -30,7 +30,11 @@ export function Hero() {
           <Chrome className='h-4 w-4' />
           Add to Chrome — it's free
         </Button>
-        <a href='https://github.com' target='_blank' rel='noopener noreferrer'>
+        <a
+          href='https://github.com/aycom3/gitpilot'
+          target='_blank'
+          rel='noopener noreferrer'
+        >
           <Button variant='outline' size='lg' className='gap-2'>
             View on GitHub
             <ChevronRight className='h-4 w-4' />
