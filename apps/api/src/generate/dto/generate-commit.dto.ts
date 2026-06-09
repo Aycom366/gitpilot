@@ -3,7 +3,7 @@ import type { ProviderName } from '@gitpilot/shared-types';
 
 export class GenerateCommitDto {
   @IsString()
-  @MaxLength(8000) // diff can be large but we cap it
+  @MaxLength(20000) // diff can be large but we cap it
   diff: string;
 
   @IsOptional()

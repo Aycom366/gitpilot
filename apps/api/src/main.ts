@@ -1,11 +1,13 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import morgan from 'morgan';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Global DTO validation
+  app.use(morgan('dev'));
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // strip unknown fields

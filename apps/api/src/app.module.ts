@@ -8,7 +8,8 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { GenerateModule } from './generate/generate.module';
 import { AppDataSource } from './database/data-source';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { AiExceptionFilter } from './common/filters/ai-exception.filter';
 
 @Module({
   imports: [
@@ -22,6 +23,10 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
     GenerateModule,
   ],
   providers: [
+    {
+      provide: APP_FILTER,
+      useClass: AiExceptionFilter,
+    },
     {
       provide: APP_INTERCEPTOR,
       useClass: ClassSerializerInterceptor,

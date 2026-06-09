@@ -89,11 +89,14 @@ export class GenerateService {
       model,
       schema: PrSchema,
       system:
-        'You are an expert at writing clear GitHub pull request descriptions in markdown.',
+        'You are an expert at writing GitHub pull requests. ' +
+        'Given branch info, commits, and an optional diff, produce:\n' +
+        '1. A concise PR title (imperative mood, ≤72 chars, no ticket prefix).\n' +
+        '2. A markdown PR body with three sections: ## Summary, ## Changes, ## Testing.',
       prompt: `Branch: ${dto.branch} → ${dto.baseBranch}\n\nCommits:\n${commitList}${
-        dto.diff ? `\n\nDiff:\n${dto.diff}` : ''
+        dto.diff ? `\n\nDiff (truncated):\n${dto.diff}` : ''
       }`,
-      maxTokens: 800,
+      maxTokens: 1200,
     });
 
     void this.enqueue(AnalyticsJobs.LOG_GENERATION, {
@@ -160,8 +163,10 @@ export class GenerateService {
    * Resolves the provider name, configured model instance, and model ID.
    */
   private resolveProvider(user: User, preferred?: ProviderName) {
+    //using google for free tier, where is the money to give openai and anthropic?
     const providerName: ProviderName =
-      preferred ?? user.preferredProvider ?? 'google';
+      user.tier !== 'byok' ? 'google' : (preferred ?? user.preferredProvider);
+
     const provider = this.providerMap[providerName];
     const apiKey =
       user.tier === 'byok'

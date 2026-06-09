@@ -1,4 +1,4 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
+import axios, { type AxiosRequestConfig } from "axios";
 
 /** Axios instance where response interceptor has already unwrapped response.data */
 export interface UnwrappedAxiosInstance {
