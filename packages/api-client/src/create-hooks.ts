@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
-import type { AxiosInstance } from 'axios';
+import type { UnwrappedAxiosInstance } from './create-client';
 
 interface UseCreateResourceOptions<TResponse> {
   endpoint: string;
@@ -19,7 +19,7 @@ interface UseDeleteResourceOptions<TResponse> {
   onSuccess?: (data: TResponse) => void;
 }
 
-export function createApiHooks(client: AxiosInstance) {
+export function createApiHooks(client: UnwrappedAxiosInstance) {
   function useCreateResource<TResponse, TData>({
     endpoint,
     queryKeyToInvalidate,

@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { UsageDaily } from './usage-daily.entity';
 import { GenerationHistory } from './generation-history.entity';
-import { Exclude } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 
 @Entity('users')
 export class User {
@@ -37,8 +37,14 @@ export class User {
   @Column({ type: 'varchar', default: 'google' })
   preferredProvider: 'google' | 'anthropic' | 'openai';
 
+  @Exclude()
   @Column({ type: 'varchar', nullable: true })
   encryptedApiKey: string | null;
+
+  @Expose()
+  get hasApiKey(): boolean {
+    return !!this.encryptedApiKey;
+  }
 
   @Exclude() // not exposed via API
   @Column({ type: 'varchar', nullable: true })

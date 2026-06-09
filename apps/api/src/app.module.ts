@@ -7,21 +7,13 @@ import { DatabaseModule } from './database/database.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { GenerateModule } from './generate/generate.module';
-import { config } from './config';
+import { AppDataSource } from './database/data-source';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-
-console.info('config.databaseUrl', config.databaseUrl);
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      url: config.databaseUrl,
-      entities: [__dirname + '/database/models/*.entity.{ts,js}'],
-      migrations: [__dirname + '/migrations/*.{ts,js}'],
-      synchronize: false,
-    }),
+    TypeOrmModule.forRoot(AppDataSource.options),
     RedisModule,
     QueueModule,
     DatabaseModule,

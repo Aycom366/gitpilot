@@ -6,13 +6,13 @@
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": ["https://github.com/*"],
   "background": {
-    "service_worker": "src/background/service-worker.ts",
+    "service_worker": "service-worker.js",
     "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["https://github.com/*"],
-      "js": ["src/content/github.ts"]
+      "js": ["content.js"]
     }
   ],
   "action": {

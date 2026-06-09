@@ -13,7 +13,7 @@ import { SettingsPage } from "src/popup/pages/settings";
 
 // Root route: async-loads tokens from chrome.storage before any child renders
 const rootRoute = createRootRoute({
-  loader: () => initAuth(),
+  beforeLoad: () => initAuth(),
   component: Outlet,
 });
 
