@@ -1,12 +1,20 @@
 // Content script — runs on github.com pages
-// Injects ✨ GitPilot buttons on commit and PR creation pages.
+// Injects GitPilot buttons on commit and PR creation pages.
+
+import {
+  makeButton,
+  setButtonState,
+  showError,
+  sendToBackground,
+  setNativeValue,
+} from "./shared";
+
+// ── Page detection ────────────────────────────────────────────────────────────
 
 const BTN_ID_COMMIT = "gitpilot-commit-btn";
 const BTN_ID_PR = "gitpilot-pr-btn";
-
-const PRButtonText = "Generate";
-
-// ── DOM helpers ──────────────────────────────────────────────────────────────
+const LABEL_COMMIT = "Generate commit message";
+const LABEL_PR = "Generate";
 
 function isCommitPage(): boolean {
   return !!document.querySelector("textarea#commit-summary-input");
@@ -19,43 +27,11 @@ function isPrPage(): boolean {
   );
 }
 
-function makeButton(id: string, label: string): HTMLButtonElement {
-  const btn = document.createElement("button");
-  btn.id = id;
-  btn.type = "button";
-  btn.textContent = label;
-  btn.style.cssText = [
-    "display:inline-flex;align-items:center;gap:4px",
-    "padding:4px 10px",
-    "border-radius:6px",
-    "border:1px solid #6d28d9",
-    "background:#4c1d95",
-    "color:#ede9fe",
-    "font-size:12px",
-    "font-weight:500",
-    "cursor:pointer",
-    "margin-left:8px",
-    "transition:opacity 0.15s",
-  ].join(";");
-  return btn;
-}
-
-function setButtonState(
-  btn: HTMLButtonElement,
-  loading: boolean,
-  label: string,
-) {
-  btn.disabled = loading;
-  btn.textContent = loading ? "Generating…" : label;
-  btn.style.opacity = loading ? "0.7" : "1";
-}
-
-// ── Diff extraction ──────────────────────────────────────────────────────────
+// ── Diff extraction ───────────────────────────────────────────────────────────
 
 function extractDiff(): string {
   const parts: string[] = [];
 
-  // Each file block has a .file-header[data-path]
   document
     .querySelectorAll<HTMLElement>(".file-header[data-path]")
     .forEach((header) => {
@@ -64,13 +40,11 @@ function extractDiff(): string {
       if (!fileBlock) return;
 
       const fileLines: string[] = [`--- a/${filePath}`, `+++ b/${filePath}`];
-
       fileBlock.querySelectorAll<HTMLElement>("tr").forEach((row) => {
-        const codeCell = row.querySelector<HTMLElement>("[data-code-marker]");
-        if (!codeCell) return;
-        const marker = codeCell.getAttribute("data-code-marker") ?? " ";
-        const text = codeCell.textContent ?? "";
-        fileLines.push(`${marker}${text}`);
+        const cell = row.querySelector<HTMLElement>("[data-code-marker]");
+        if (!cell) return;
+        const marker = cell.getAttribute("data-code-marker") ?? " ";
+        fileLines.push(`${marker}${cell.textContent ?? ""}`);
       });
 
       parts.push(fileLines.join("\n"));
@@ -85,7 +59,6 @@ function extractPrData(): {
   baseBranch: string;
   diff: string;
 } {
-  // Selectors confirmed via DOM inspection on github.com/compare pages
   const branch =
     document
       .querySelector<HTMLElement>(
@@ -102,49 +75,18 @@ function extractPrData(): {
       )
       ?.textContent?.trim() ?? "main";
 
-  const commits: string[] = [];
-  document
-    .querySelectorAll<HTMLElement>('li[class*="commit"] a.Link--primary')
-    .forEach((el) => {
-      const text = el.textContent?.trim();
-      if (text) commits.push(text);
-    });
+  const commits = Array.from(
+    document.querySelectorAll<HTMLElement>(
+      'li[class*="commit"] a.Link--primary',
+    ),
+  )
+    .map((el) => el.textContent?.trim())
+    .filter(Boolean) as string[];
 
   return { commits, branch, baseBranch, diff: extractDiff() };
 }
 
-// ── Service worker messaging ─────────────────────────────────────────────────
-
-interface GenerateResponse {
-  ok: boolean;
-  data?: { title?: string; body?: string; description?: string };
-  error?: string;
-}
-
-function sendToBackground(msg: unknown): Promise<GenerateResponse> {
-  return new Promise((resolve) => {
-    chrome.runtime.sendMessage(msg, (response: GenerateResponse) => {
-      resolve(response ?? { ok: false, error: "No response from extension" });
-    });
-  });
-}
-
-// ── Toast helper ─────────────────────────────────────────────────────────────
-
-function showError(msg: string) {
-  const toast = document.createElement("div");
-  toast.style.cssText = [
-    "position:fixed;bottom:24px;right:24px;z-index:99999",
-    "background:#18181b;color:#fca5a5;border:1px solid #991b1b",
-    "border-radius:8px;padding:10px 14px;font-size:13px",
-    "box-shadow:0 4px 16px rgba(0,0,0,.5)",
-  ].join(";");
-  toast.textContent = `GitPilot: ${msg}`;
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 4000);
-}
-
-// ── Commit page ──────────────────────────────────────────────────────────────
+// ── Commit page ───────────────────────────────────────────────────────────────
 
 function handleCommitPage() {
   if (document.getElementById(BTN_ID_COMMIT)) return;
@@ -154,40 +96,34 @@ function handleCommitPage() {
   );
   if (!titleInput?.parentElement) return;
 
-  const btn = makeButton(BTN_ID_COMMIT, "Generate commit message");
+  const btn = makeButton(BTN_ID_COMMIT, LABEL_COMMIT);
   titleInput.parentElement.appendChild(btn);
 
   btn.addEventListener("click", async () => {
-    setButtonState(btn, true, "Generate commit message");
-
+    setButtonState(btn, true, LABEL_COMMIT);
     const resp = await sendToBackground({
       type: "GENERATE_COMMIT",
       diff: extractDiff(),
     });
-
-    setButtonState(btn, false, "Generate commit message");
+    setButtonState(btn, false, LABEL_COMMIT);
 
     if (!resp.ok || !resp.data) {
       showError(resp.error ?? "Generation failed — are you logged in?");
       return;
     }
 
-    titleInput.value = resp.data.title ?? "";
-    titleInput.dispatchEvent(new Event("input", { bubbles: true }));
+    setNativeValue(titleInput, resp.data.title ?? "");
 
     if (resp.data.body) {
       const desc = document.querySelector<HTMLTextAreaElement>(
         "textarea#commit-description-input",
       );
-      if (desc) {
-        desc.value = resp.data.body;
-        desc.dispatchEvent(new Event("input", { bubbles: true }));
-      }
+      if (desc) setNativeValue(desc, resp.data.body);
     }
   });
 }
 
-// ── PR page ──────────────────────────────────────────────────────────────────
+// ── PR page ───────────────────────────────────────────────────────────────────
 
 function handlePrPage() {
   if (document.getElementById(BTN_ID_PR)) return;
@@ -197,12 +133,11 @@ function handlePrPage() {
   );
   if (!titleInput?.parentElement) return;
 
-  const btn = makeButton(BTN_ID_PR, PRButtonText);
+  const btn = makeButton(BTN_ID_PR, LABEL_PR);
   titleInput.parentElement.appendChild(btn);
 
   btn.addEventListener("click", async () => {
-    setButtonState(btn, true, PRButtonText);
-
+    setButtonState(btn, true, LABEL_PR);
     const { commits, branch, baseBranch, diff } = extractPrData();
 
     const resp = await sendToBackground({
@@ -213,32 +148,26 @@ function handlePrPage() {
       baseBranch,
     });
 
-    setButtonState(btn, false, PRButtonText);
+    setButtonState(btn, false, LABEL_PR);
 
     if (!resp.ok || !resp.data) {
       showError(resp.error ?? "Generation failed — are you logged in?");
       return;
     }
 
-    if (resp.data.title) {
-      titleInput.value = resp.data.title;
-      titleInput.dispatchEvent(new Event("input", { bubbles: true }));
-    }
+    if (resp.data.title) setNativeValue(titleInput, resp.data.title);
 
     const bodyText = resp.data.body ?? resp.data.description;
     if (bodyText) {
       const desc = document.querySelector<HTMLTextAreaElement>(
         "textarea#pull_request_body",
       );
-      if (desc) {
-        desc.value = bodyText;
-        desc.dispatchEvent(new Event("input", { bubbles: true }));
-      }
+      if (desc) setNativeValue(desc, bodyText);
     }
   });
 }
 
-// ── Init ─────────────────────────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────────────────
 
 function init() {
   if (isCommitPage()) handleCommitPage();
@@ -250,5 +179,4 @@ document.addEventListener("DOMContentLoaded", init);
 document.addEventListener("turbo:render", init);
 document.addEventListener("pjax:end", init);
 
-// Run immediately if DOM already loaded
 if (document.readyState !== "loading") init();

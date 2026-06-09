@@ -4,15 +4,19 @@
   "version": "0.1.0",
   "description": "AI-powered commit messages and PR descriptions",
   "permissions": ["storage", "activeTab", "scripting"],
-  "host_permissions": ["https://github.com/*"],
+  "host_permissions": ["https://github.com/*", "https://dev.azure.com/*"],
   "background": {
-    "service_worker": "service-worker.js",
+    "service_worker": "src/background/service-worker.ts",
     "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["https://github.com/*"],
-      "js": ["content.js"]
+      "js": ["src/content/github.ts"]
+    },
+    {
+      "matches": ["https://dev.azure.com/*"],
+      "js": ["src/content/azure.ts"]
     }
   ],
   "action": {

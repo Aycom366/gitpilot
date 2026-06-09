@@ -1,7 +1,7 @@
-import { createApiClient } from '@gitpilot/api-client';
-import { getToken, getRefreshToken, setTokens, removeTokens } from './auth';
+import { createApiClient } from "@gitpilot/api-client";
+import { getToken, getRefreshToken, setTokens, removeTokens } from "./auth";
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 export const apiClient = createApiClient(BASE_URL, {
   getToken,

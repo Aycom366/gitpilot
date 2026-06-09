@@ -51,7 +51,7 @@ export function LoginPage() {
         <p className='text-xs text-zinc-500 mb-5'>
           Or{" "}
           <a
-            href={`${import.meta.env.VITE_API_URL ?? "http://localhost:3000"}/auth/github`}
+            href={`${import.meta.env.VITE_API_URL}/auth/github`}
             target='_blank'
             rel='noopener noreferrer'
             className='text-violet-400 hover:text-violet-300'

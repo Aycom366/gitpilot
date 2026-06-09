@@ -19,10 +19,12 @@ function extractErrorMessage(err: unknown): string {
 // from chrome.storage.local every time this module loads.
 void initAuth();
 
-const apiClient = createApiClient(
-  import.meta.env.VITE_API_URL ?? "http://localhost:3000",
-  { getToken, getRefreshToken, setTokens, removeTokens },
-);
+const apiClient = createApiClient(import.meta.env.VITE_API_URL, {
+  getToken,
+  getRefreshToken,
+  setTokens,
+  removeTokens,
+});
 
 // ── Message handlers ─────────────────────────────────────────────────────────
 
