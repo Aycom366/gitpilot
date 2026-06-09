@@ -1,3 +1,4 @@
+import axios from "axios";
 import { createApiClient } from "@gitpilot/api-client";
 import {
   initAuth,
@@ -6,6 +7,13 @@ import {
   setTokens,
   removeTokens,
 } from "src/shared/auth";
+
+function extractErrorMessage(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    return err.response?.data?.message ?? err.message;
+  }
+  return err instanceof Error ? err.message : String(err);
+}
 
 // Service workers can be killed and restarted — re-populate the token cache
 // from chrome.storage.local every time this module loads.
@@ -67,7 +75,9 @@ chrome.runtime.onMessage.addListener(
           provider: message.provider,
         })
         .then((data) => sendResponse({ ok: true, data }))
-        .catch((err: Error) => sendResponse({ ok: false, error: err.message }));
+        .catch((err) =>
+          sendResponse({ ok: false, error: extractErrorMessage(err) }),
+        );
       return true; // keep channel open for async response
     }
 
@@ -81,7 +91,9 @@ chrome.runtime.onMessage.addListener(
           provider: message.provider,
         })
         .then((data) => sendResponse({ ok: true, data }))
-        .catch((err: Error) => sendResponse({ ok: false, error: err.message }));
+        .catch((err) =>
+          sendResponse({ ok: false, error: extractErrorMessage(err) }),
+        );
       return true;
     }
 

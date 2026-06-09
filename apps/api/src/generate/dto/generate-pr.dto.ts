@@ -14,7 +14,7 @@ export class GeneratePrDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(8000)
+  @MaxLength(20000)
   diff?: string;
 
   @IsString()
