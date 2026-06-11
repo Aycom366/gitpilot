@@ -14,7 +14,7 @@ function extensionPlugin() {
     apply: "build" as const,
     async closeBundle() {
       // Content scripts must be self-contained (no imports) — build as IIFE
-      for (const name of ["github", "azure"]) {
+      for (const name of ["github", "azure", "azure-main"]) {
         await viteBuild({
           configFile: false,
           logLevel: "warn",

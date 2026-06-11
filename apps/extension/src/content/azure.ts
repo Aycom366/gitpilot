@@ -4,10 +4,14 @@ import {
   showError,
   sendToBackground,
   setNativeValue,
+  computeUnifiedDiff,
 } from "./shared";
 
 const BTN_ID = "gitpilot-azure-pr-btn";
 const LABEL = "✨ Generate PR";
+
+const BTN_ID_COMMIT = "gitpilot-azure-commit-btn";
+const LABEL_COMMIT = "✨ Generate message";
 
 function isCreatePrPage(): boolean {
   return /\/_git\/.+\/pullrequestcreate/.test(window.location.pathname);
@@ -107,6 +111,144 @@ function getDescriptionEditor(): HTMLTextAreaElement | null {
   return null;
 }
 
+// ── Azure file editor commit panel ────────────────────────────────────────────
+
+/**
+ * Switch to "Highlight changes" tab, ask the MAIN-world azure-main.ts to read
+ * Monaco model values (via postMessage bridge), compute unified diff, then
+ * switch back. The bridge is needed because content scripts run in an isolated
+ * JS context and cannot access window.monaco directly.
+ */
+async function getAzureFileDiff(): Promise<string> {
+  const filename =
+    new URLSearchParams(window.location.search)
+      .get("path")
+      ?.replace(/^\//, "") ?? "unknown";
+
+  // Switch to diff tab so Monaco loads both models.
+  clickTab("Highlight changes");
+
+  // Ask the MAIN-world script for model values.
+  const result = await new Promise<{ origVal: string; modVal: string } | null>(
+    (resolve) => {
+      const requestId = `gp-${Date.now()}`;
+      const timer = setTimeout(() => {
+        window.removeEventListener("message", handler);
+        resolve(null);
+      }, 5000);
+
+      const handler = (e: MessageEvent) => {
+        if (
+          e.data?.type === "GITPILOT_MONACO_RESULT" &&
+          e.data.requestId === requestId
+        ) {
+          clearTimeout(timer);
+          window.removeEventListener("message", handler);
+          const { origVal, modVal } = e.data as {
+            origVal: string | null;
+            modVal: string | null;
+          };
+          resolve(origVal && modVal ? { origVal, modVal } : null);
+        }
+      };
+
+      window.addEventListener("message", handler);
+      window.postMessage({ type: "GITPILOT_READ_MONACO", requestId }, "*");
+    },
+  );
+
+  // Switch back to Contents tab.
+  clickTab("Contents");
+
+  if (!result) return "";
+  return computeUnifiedDiff(result.origVal, result.modVal, filename);
+}
+
+/** Show an error message inline inside the commit panel (above footer buttons). */
+function showPanelError(msg: string) {
+  const existing = document.getElementById("gitpilot-panel-error");
+  if (existing) {
+    existing.textContent = `⚠ ${msg}`;
+    return;
+  }
+
+  const err = document.createElement("div");
+  err.id = "gitpilot-panel-error";
+  err.style.cssText = [
+    "color:#fca5a5;background:#3b0000;border:1px solid #991b1b",
+    "border-radius:4px;padding:6px 10px;font-size:12px;margin:4px 0",
+  ].join(";");
+  err.textContent = `⚠ ${msg}`;
+
+  const footer = document.querySelector(".bolt-panel-footer");
+  if (footer) footer.insertAdjacentElement("beforebegin", err);
+  else document.querySelector(".bolt-panel-footer-buttons")?.before(err);
+
+  setTimeout(() => err.remove(), 6000);
+}
+
+function handleCommitPanel() {
+  if (document.getElementById(BTN_ID_COMMIT)) return;
+
+  const textarea = document.querySelector<HTMLTextAreaElement>(
+    "textarea.repos-commit-panel-comment-input",
+  );
+  if (!textarea) return;
+
+  const footerBtns = document.querySelector<HTMLElement>(
+    ".bolt-panel-footer-buttons",
+  );
+  if (!footerBtns) return;
+
+  const btn = makeButton(
+    BTN_ID_COMMIT,
+    LABEL_COMMIT,
+    "padding:5px 12px;border-radius:4px;",
+  );
+  footerBtns.insertBefore(btn, footerBtns.firstChild);
+
+  btn.addEventListener("click", async () => {
+    setButtonState(btn, true, LABEL_COMMIT);
+
+    const diff = await getAzureFileDiff();
+    if (!diff) {
+      setButtonState(btn, false, LABEL_COMMIT);
+      showPanelError("No changes detected — make edits before generating.");
+      return;
+    }
+
+    const resp = await sendToBackground({ type: "GENERATE_COMMIT", diff });
+    setButtonState(btn, false, LABEL_COMMIT);
+
+    if (!resp.ok || !resp.data) {
+      showPanelError(resp.error ?? "Generation failed — are you logged in?");
+      return;
+    }
+
+    const freshTextarea = document.querySelector<HTMLTextAreaElement>(
+      "textarea.repos-commit-panel-comment-input",
+    );
+    if (freshTextarea) setNativeValue(freshTextarea, resp.data.title ?? "");
+  });
+}
+
+// Watch for the commit panel appearing (opened when user clicks Commit on file editor)
+let commitPanelTimer: ReturnType<typeof setTimeout> | null = null;
+new MutationObserver(() => {
+  if (document.getElementById(BTN_ID_COMMIT)) return;
+  if (!document.querySelector("textarea.repos-commit-panel-comment-input"))
+    return;
+  if (commitPanelTimer) return;
+  commitPanelTimer = setTimeout(() => {
+    commitPanelTimer = null;
+    handleCommitPanel();
+  }, 80);
+}).observe(document.body, { subtree: true, childList: true });
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+let isGenerating = false;
+
 function injectButton(titleInput: HTMLInputElement) {
   if (document.getElementById(BTN_ID)) return;
 
@@ -117,7 +259,11 @@ function injectButton(titleInput: HTMLInputElement) {
     ) ?? titleInput.parentElement;
   container?.appendChild(btn);
 
+  if (isGenerating) setButtonState(btn, true, LABEL);
+
   btn.addEventListener("click", async () => {
+    if (isGenerating) return;
+    isGenerating = true;
     setButtonState(btn, true, LABEL);
 
     const { branch, baseBranch } = getBranchInfo();
@@ -131,7 +277,13 @@ function injectButton(titleInput: HTMLInputElement) {
       baseBranch,
     });
 
-    setButtonState(btn, false, LABEL);
+    /**
+     * Allow tracking of button state for isLoading state
+     */
+    isGenerating = false;
+    const liveBtn = (document.getElementById(BTN_ID) ??
+      btn) as HTMLButtonElement;
+    setButtonState(liveBtn, false, LABEL);
 
     if (!resp.ok || !resp.data) {
       showError(resp.error ?? "Generation failed — are you logged in?");
