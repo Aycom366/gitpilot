@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { GitCommitHorizontal } from "lucide-react";
 
 export function Footer() {
@@ -10,12 +11,12 @@ export function Footer() {
           <span className='text-sm text-zinc-600'>· Open source</span>
         </div>
         <div className='flex gap-8 text-sm text-zinc-500'>
-          <a href='#' className='hover:text-zinc-300 transition-colors'>
+          <Link to='/privacy' className='hover:text-zinc-300 transition-colors'>
             Privacy
-          </a>
-          <a href='#' className='hover:text-zinc-300 transition-colors'>
+          </Link>
+          <Link to='/terms' className='hover:text-zinc-300 transition-colors'>
             Terms
-          </a>
+          </Link>
           <a
             href='https://github.com'
             target='_blank'

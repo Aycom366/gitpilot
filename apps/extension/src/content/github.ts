@@ -7,49 +7,85 @@ import {
   showError,
   sendToBackground,
   setNativeValue,
+  computeUnifiedDiff,
 } from "./shared";
-
-// ── Page detection ────────────────────────────────────────────────────────────
 
 const BTN_ID_COMMIT = "gitpilot-commit-btn";
 const BTN_ID_PR = "gitpilot-pr-btn";
-const LABEL_COMMIT = "Generate commit message";
+const LABEL_COMMIT = "Generate message";
 const LABEL_PR = "Generate";
 
-function isCommitPage(): boolean {
-  return !!document.querySelector("textarea#commit-summary-input");
+// ── In-memory original content capture ───────────────────────────────────────
+// Captured when the edit page first loads (before any user edits).
+
+let originalContent: string | null = null;
+let captureTimer: ReturnType<typeof setTimeout> | null = null;
+
+function isEditPage(): boolean {
+  return window.location.pathname.includes("/edit/");
 }
 
-function isPrPage(): boolean {
-  return (
-    window.location.pathname.includes("/compare/") ||
-    window.location.pathname.includes("/pull/new/")
-  );
+function getEditFilename(): string {
+  const parts = window.location.pathname.split("/edit/");
+  if (parts.length < 2) return "unknown";
+  return parts[1].split("/").slice(1).join("/") || "unknown";
 }
 
-// ── Diff extraction ───────────────────────────────────────────────────────────
+function readEditorLines(): string {
+  return Array.from(document.querySelectorAll<HTMLElement>(".cm-line"))
+    .map((l) => l.textContent ?? "")
+    .join("\n");
+}
 
-function extractDiff(): string {
+function captureOriginalContent() {
+  if (originalContent !== null) return; // already captured
+  const content = readEditorLines();
+  if (content.trim()) {
+    originalContent = content;
+    return;
+  }
+  // CodeMirror not ready yet — retry
+  if (!captureTimer) {
+    captureTimer = setTimeout(() => {
+      captureTimer = null;
+      captureOriginalContent();
+    }, 300);
+  }
+}
+
+function getCommitDiff(): string {
+  if (!isEditPage()) return readEditorLines().slice(0, 20000);
+
+  const current = readEditorLines();
+  if (!originalContent || originalContent === current) {
+    // No changes detected or original unknown — fall back to full content
+    return `File: ${getEditFilename()}\n\n${current}`.slice(0, 20000);
+  }
+
+  const diff = computeUnifiedDiff(originalContent, current, getEditFilename());
+  return diff || `File: ${getEditFilename()}\n\n${current}`.slice(0, 20000);
+}
+
+// ── PR diff extraction ────────────────────────────────────────────────────────
+
+function extractPrDiff(): string {
   const parts: string[] = [];
-
   document
     .querySelectorAll<HTMLElement>(".file-header[data-path]")
     .forEach((header) => {
       const filePath = header.getAttribute("data-path") ?? "unknown";
       const fileBlock = header.closest(".js-file, .file");
       if (!fileBlock) return;
-
-      const fileLines: string[] = [`--- a/${filePath}`, `+++ b/${filePath}`];
+      const lines: string[] = [`--- a/${filePath}`, `+++ b/${filePath}`];
       fileBlock.querySelectorAll<HTMLElement>("tr").forEach((row) => {
         const cell = row.querySelector<HTMLElement>("[data-code-marker]");
         if (!cell) return;
-        const marker = cell.getAttribute("data-code-marker") ?? " ";
-        fileLines.push(`${marker}${cell.textContent ?? ""}`);
+        lines.push(
+          `${cell.getAttribute("data-code-marker") ?? " "}${cell.textContent ?? ""}`,
+        );
       });
-
-      parts.push(fileLines.join("\n"));
+      parts.push(lines.join("\n"));
     });
-
   return parts.join("\n\n").slice(0, 20000);
 }
 
@@ -83,28 +119,35 @@ function extractPrData(): {
     .map((el) => el.textContent?.trim())
     .filter(Boolean) as string[];
 
-  return { commits, branch, baseBranch, diff: extractDiff() };
+  return { commits, branch, baseBranch, diff: extractPrDiff() };
 }
 
-// ── Commit page ───────────────────────────────────────────────────────────────
+// ── Commit modal ──────────────────────────────────────────────────────────────
 
-function handleCommitPage() {
+function handleCommitModal() {
   if (document.getElementById(BTN_ID_COMMIT)) return;
 
-  const titleInput = document.querySelector<HTMLTextAreaElement>(
-    "textarea#commit-summary-input",
+  const titleInput = document.querySelector<HTMLInputElement>(
+    "input#commit-message-input",
   );
-  if (!titleInput?.parentElement) return;
+  if (!titleInput) return;
 
-  const btn = makeButton(BTN_ID_COMMIT, LABEL_COMMIT);
-  titleInput.parentElement.appendChild(btn);
+  const formControl = titleInput.closest(
+    ".prc-FormControl-ControlVerticalLayout-8YotI, [class*='FormControl']",
+  );
+  if (!formControl) return;
+
+  const btn = makeButton(
+    BTN_ID_COMMIT,
+    LABEL_COMMIT,
+    "padding:4px 10px;border-radius:6px;margin:6px 0;display:block",
+  );
+  formControl.insertAdjacentElement("afterend", btn);
 
   btn.addEventListener("click", async () => {
+    const diff = getCommitDiff();
     setButtonState(btn, true, LABEL_COMMIT);
-    const resp = await sendToBackground({
-      type: "GENERATE_COMMIT",
-      diff: extractDiff(),
-    });
+    const resp = await sendToBackground({ type: "GENERATE_COMMIT", diff });
     setButtonState(btn, false, LABEL_COMMIT);
 
     if (!resp.ok || !resp.data) {
@@ -169,14 +212,53 @@ function handlePrPage() {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
+function isPrPage(): boolean {
+  return (
+    window.location.pathname.includes("/compare/") ||
+    window.location.pathname.includes("/pull/new/")
+  );
+}
+
+// Watch for commit modal (dynamically injected by GitHub's React)
+let commitModalTimer: ReturnType<typeof setTimeout> | null = null;
+new MutationObserver(() => {
+  if (document.getElementById(BTN_ID_COMMIT)) return;
+  if (!document.querySelector("input#commit-message-input")) return;
+  if (commitModalTimer) return;
+  commitModalTimer = setTimeout(() => {
+    commitModalTimer = null;
+    handleCommitModal();
+  }, 80);
+}).observe(document.body, { subtree: true, childList: true });
+
+// Watch for PR button being removed — GitHub re-renders the title area when it
+// auto-populates the PR title (e.g. after branch selection), which removes any
+// injected elements.
+let prReinjectTimer: ReturnType<typeof setTimeout> | null = null;
+new MutationObserver(() => {
+  if (!isPrPage()) return;
+  if (document.getElementById(BTN_ID_PR)) return;
+  if (prReinjectTimer) return;
+  prReinjectTimer = setTimeout(() => {
+    prReinjectTimer = null;
+    handlePrPage();
+  }, 80);
+}).observe(document.body, { subtree: true, childList: true });
+
 function init() {
-  if (isCommitPage()) handleCommitPage();
+  if (isEditPage()) captureOriginalContent();
   if (isPrPage()) handlePrPage();
 }
 
-// GitHub uses Turbo navigation — re-run on each page transition
 document.addEventListener("DOMContentLoaded", init);
-document.addEventListener("turbo:render", init);
-document.addEventListener("pjax:end", init);
+document.addEventListener("turbo:render", () => {
+  // Page navigated — reset captured content for new edit page
+  originalContent = null;
+  init();
+});
+document.addEventListener("pjax:end", () => {
+  originalContent = null;
+  init();
+});
 
 if (document.readyState !== "loading") init();

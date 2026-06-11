@@ -20,6 +20,25 @@ export class UsersService {
     return this.repo.findOneBy({ email });
   }
 
+  /** Same as findByEmail but also returns soft-deleted rows. */
+  async findByEmailIncludeDeleted(email: string): Promise<User | null> {
+    return this.repo.findOne({ where: { email }, withDeleted: true });
+  }
+
+  /** Same as findByGithubId but also returns soft-deleted rows. */
+  async findByGithubIdIncludeDeleted(githubId: string): Promise<User | null> {
+    return this.repo.findOne({ where: { githubId }, withDeleted: true });
+  }
+
+  /**
+   * Restore a soft-deleted user and overwrite fields with fresh data.
+   * Used when a previously deleted user re-registers.
+   */
+  async restoreAndUpdate(id: string, data: Partial<User>): Promise<User> {
+    await this.repo.restore(id);
+    return this.update(id, data);
+  }
+
   async findByGithubId(githubId: string): Promise<User | null> {
     return this.repo.findOneBy({ githubId });
   }
@@ -77,5 +96,21 @@ export class UsersService {
     provider: ProviderName,
   ): Promise<User> {
     return this.update(id, { preferredProvider: provider });
+  }
+
+  /**
+   * Soft-delete the account and immediately wipe all credentials.
+   * TypeORM's @DeleteDateColumn means findById / findByEmail will no longer
+   * return this user, so existing JWTs become invalid instantly.
+   * A scheduled job can hard-delete after the GDPR grace period (30 days).
+   */
+  async deleteAccount(id: string): Promise<void> {
+    // Wipe credentials first so they are irrecoverable even within the grace period
+    await this.repo.update(id, {
+      encryptedApiKey: null,
+      apiKeyIv: null,
+      passwordHash: null,
+    });
+    await this.repo.softDelete(id);
   }
 }

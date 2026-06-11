@@ -16,6 +16,12 @@
     },
     {
       "matches": ["https://dev.azure.com/*"],
+      "js": ["src/content/azure-main.ts"],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://dev.azure.com/*"],
       "js": ["src/content/azure.ts"]
     }
   ],
