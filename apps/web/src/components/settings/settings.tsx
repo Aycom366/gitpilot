@@ -8,6 +8,7 @@ import { ProfileSection } from "./profile-section";
 import { ProviderSection } from "./provider-section";
 import { ByokSection } from "./byok-section";
 import { ExtensionSection } from "./extension-section";
+import { DangerSection } from "./danger-section";
 
 export function Settings() {
   const { data: user, isLoading } = useQuery(userQueryOptions);
@@ -32,6 +33,7 @@ export function Settings() {
       />
       <ByokSection user={user} effectiveProvider={effectiveProvider} />
       <ExtensionSection />
+      <DangerSection />
     </div>
   );
 }

@@ -58,4 +58,16 @@ export class UsersController {
     const user = req.user as User;
     return this.usersService.removeApiKey(user.id);
   }
+
+  /**
+   * DELETE /users/me
+   * Soft-deletes the account and wipes all credentials.
+   * Returns 204; the client should clear tokens and redirect to home.
+   */
+  @Delete('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteAccount(@Req() req: Request) {
+    const user = req.user as User;
+    await this.usersService.deleteAccount(user.id);
+  }
 }

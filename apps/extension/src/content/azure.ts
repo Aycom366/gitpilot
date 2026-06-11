@@ -8,10 +8,10 @@ import {
 } from "./shared";
 
 const BTN_ID = "gitpilot-azure-pr-btn";
-const LABEL = "✨ Generate PR";
+const LABEL = "Generate PR";
 
 const BTN_ID_COMMIT = "gitpilot-azure-commit-btn";
-const LABEL_COMMIT = "✨ Generate message";
+const LABEL_COMMIT = "Generate message";
 
 function isCreatePrPage(): boolean {
   return /\/_git\/.+\/pullrequestcreate/.test(window.location.pathname);

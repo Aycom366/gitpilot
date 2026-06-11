@@ -12,8 +12,8 @@ import {
 
 const BTN_ID_COMMIT = "gitpilot-commit-btn";
 const BTN_ID_PR = "gitpilot-pr-btn";
-const LABEL_COMMIT = "✨ Generate message";
-const LABEL_PR = "✨ Generate";
+const LABEL_COMMIT = "Generate message";
+const LABEL_PR = "Generate";
 
 // ── In-memory original content capture ───────────────────────────────────────
 // Captured when the edit page first loads (before any user edits).
@@ -228,6 +228,20 @@ new MutationObserver(() => {
   commitModalTimer = setTimeout(() => {
     commitModalTimer = null;
     handleCommitModal();
+  }, 80);
+}).observe(document.body, { subtree: true, childList: true });
+
+// Watch for PR button being removed — GitHub re-renders the title area when it
+// auto-populates the PR title (e.g. after branch selection), which removes any
+// injected elements.
+let prReinjectTimer: ReturnType<typeof setTimeout> | null = null;
+new MutationObserver(() => {
+  if (!isPrPage()) return;
+  if (document.getElementById(BTN_ID_PR)) return;
+  if (prReinjectTimer) return;
+  prReinjectTimer = setTimeout(() => {
+    prReinjectTimer = null;
+    handlePrPage();
   }, 80);
 }).observe(document.body, { subtree: true, childList: true });
 

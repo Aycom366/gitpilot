@@ -22,15 +22,31 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthTokens> {
+    // Check active (non-deleted) accounts first
     const existing = await this.usersService.findByEmail(dto.email);
     if (existing) throw new ConflictException('Email already in use');
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
-    const user = await this.usersService.create({
-      name: dto.name,
-      email: dto.email,
-      passwordHash,
-    });
+
+    // Check if a soft-deleted account exists for this email.
+    // If so, restore it with fresh credentials rather than hitting the unique constraint.
+    const deleted = await this.usersService.findByEmailIncludeDeleted(dto.email);
+    const user = deleted
+      ? await this.usersService.restoreAndUpdate(deleted.id, {
+          name: dto.name,
+          passwordHash,
+          githubId: null,
+          githubUsername: null,
+          encryptedApiKey: null,
+          apiKeyIv: null,
+          tier: 'free',
+          preferredProvider: 'google',
+        })
+      : await this.usersService.create({
+          name: dto.name,
+          email: dto.email,
+          passwordHash,
+        });
 
     return this.issueTokens(user);
   }
@@ -61,11 +77,24 @@ export class AuthService {
     name: string;
     email: string;
   }): Promise<User> {
-    // 1. Try match by GitHub ID
+    // 1. Active account matched by GitHub ID
     let user = await this.usersService.findByGithubId(profile.githubId);
     if (user) return user;
 
-    // 2. Try match by email — link GitHub to existing account
+    // 2. Soft-deleted account matched by GitHub ID — restore it
+    const deletedByGithub = await this.usersService.findByGithubIdIncludeDeleted(profile.githubId);
+    if (deletedByGithub) {
+      return this.usersService.restoreAndUpdate(deletedByGithub.id, {
+        name: profile.name,
+        githubUsername: profile.githubUsername,
+        encryptedApiKey: null,
+        apiKeyIv: null,
+        tier: 'free',
+        preferredProvider: 'google',
+      });
+    }
+
+    // 3. Active account matched by email — link GitHub to it
     user = await this.usersService.findByEmail(profile.email);
     if (user) {
       return this.usersService.update(user.id, {
@@ -74,7 +103,22 @@ export class AuthService {
       });
     }
 
-    // 3. Create new user
+    // 4. Soft-deleted account matched by email — restore and link GitHub
+    const deletedByEmail = await this.usersService.findByEmailIncludeDeleted(profile.email);
+    if (deletedByEmail) {
+      return this.usersService.restoreAndUpdate(deletedByEmail.id, {
+        name: profile.name,
+        githubId: profile.githubId,
+        githubUsername: profile.githubUsername,
+        passwordHash: null,
+        encryptedApiKey: null,
+        apiKeyIv: null,
+        tier: 'free',
+        preferredProvider: 'google',
+      });
+    }
+
+    // 5. Brand new user
     return this.usersService.create({
       name: profile.name,
       email: profile.email,
