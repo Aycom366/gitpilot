@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { RedisService } from '../redis/redis.service';
+import { RedisKeys } from '../redis/redis-keys';
 import { GenerationType } from '@gitpilot/shared-types';
 import {
   ANALYTICS_QUEUE,
@@ -21,7 +22,7 @@ export class RateLimitService {
     type: GenerationType,
   ): Promise<boolean> {
     const today = new Date().toISOString().split('T')[0];
-    const key = `rl:${userId}:${today}:${type}`;
+    const key = RedisKeys.rateLimit(userId, today, type);
 
     const current = await this.redis.incr(key);
 
@@ -56,7 +57,9 @@ export class RateLimitService {
 
     await Promise.all(
       types.map(async (type) => {
-        const val = await this.redis.get(`rl:${userId}:${today}:${type}`);
+        const val = await this.redis.get(
+          RedisKeys.rateLimit(userId, today, type),
+        );
         if (val) usage[type] = parseInt(val, 10);
       }),
     );

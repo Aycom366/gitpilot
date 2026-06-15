@@ -7,11 +7,11 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { RedisService } from '../redis/redis.service';
+import { RedisKeys, OTT_TTL, REFRESH_TOKEN_TTL } from '../redis/redis-keys';
 import { UsersService } from '../users/users.service';
 import { User } from '../database/models/user.entity';
 import { RegisterDto } from './dto/register.dto';
 import { AuthTokens } from '@gitpilot/shared-types';
-import { OTT_TTL, REFRESH_TTL } from 'src/utils/constant';
 
 @Injectable()
 export class AuthService {
@@ -30,7 +30,9 @@ export class AuthService {
 
     // Check if a soft-deleted account exists for this email.
     // If so, restore it with fresh credentials rather than hitting the unique constraint.
-    const deleted = await this.usersService.findByEmailIncludeDeleted(dto.email);
+    const deleted = await this.usersService.findByEmailIncludeDeleted(
+      dto.email,
+    );
     const user = deleted
       ? await this.usersService.restoreAndUpdate(deleted.id, {
           name: dto.name,
@@ -82,7 +84,8 @@ export class AuthService {
     if (user) return user;
 
     // 2. Soft-deleted account matched by GitHub ID — restore it
-    const deletedByGithub = await this.usersService.findByGithubIdIncludeDeleted(profile.githubId);
+    const deletedByGithub =
+      await this.usersService.findByGithubIdIncludeDeleted(profile.githubId);
     if (deletedByGithub) {
       return this.usersService.restoreAndUpdate(deletedByGithub.id, {
         name: profile.name,
@@ -104,7 +107,9 @@ export class AuthService {
     }
 
     // 4. Soft-deleted account matched by email — restore and link GitHub
-    const deletedByEmail = await this.usersService.findByEmailIncludeDeleted(profile.email);
+    const deletedByEmail = await this.usersService.findByEmailIncludeDeleted(
+      profile.email,
+    );
     if (deletedByEmail) {
       return this.usersService.restoreAndUpdate(deletedByEmail.id, {
         name: profile.name,
@@ -134,7 +139,7 @@ export class AuthService {
   // ─── Token refresh ────────────────────────────────────────────────────────────
 
   async refresh(refreshToken: string): Promise<AuthTokens> {
-    const userId = await this.redis.get(`refresh:${refreshToken}`);
+    const userId = await this.redis.get(RedisKeys.refreshToken(refreshToken));
     if (!userId)
       throw new UnauthorizedException('Invalid or expired refresh token');
 
@@ -142,30 +147,30 @@ export class AuthService {
     if (!user) throw new UnauthorizedException();
 
     // Rotate — revoke old, issue new
-    await this.redis.del(`refresh:${refreshToken}`);
+    await this.redis.del(RedisKeys.refreshToken(refreshToken));
     return this.issueTokens(user);
   }
 
   // ─── Logout ───────────────────────────────────────────────────────────────────
 
   async logout(refreshToken: string): Promise<void> {
-    await this.redis.del(`refresh:${refreshToken}`);
+    await this.redis.del(RedisKeys.refreshToken(refreshToken));
   }
 
   // ─── OTT (extension link flow) ───────────────────────────────────────────────
 
   async generateOtt(userId: string): Promise<string> {
     const ott = crypto.randomUUID();
-    await this.redis.set(`ott:${ott}`, userId, OTT_TTL);
+    await this.redis.set(RedisKeys.ott(ott), userId, OTT_TTL);
     return ott;
   }
 
   async exchangeOtt(ott: string): Promise<AuthTokens> {
-    const userId = await this.redis.get(`ott:${ott}`);
+    const userId = await this.redis.get(RedisKeys.ott(ott));
     if (!userId) throw new UnauthorizedException('OTT invalid or expired');
 
     // Single use — delete immediately
-    await this.redis.del(`ott:${ott}`);
+    await this.redis.del(RedisKeys.ott(ott));
 
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException();
@@ -181,7 +186,11 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload);
 
     const refreshToken = crypto.randomUUID();
-    await this.redis.set(`refresh:${refreshToken}`, user.id, REFRESH_TTL);
+    await this.redis.set(
+      RedisKeys.refreshToken(refreshToken),
+      user.id,
+      REFRESH_TOKEN_TTL,
+    );
 
     return { accessToken, refreshToken };
   }
