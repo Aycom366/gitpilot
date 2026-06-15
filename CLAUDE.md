@@ -1,9 +1,11 @@
 # GitPilot — Claude Context
 
 ## What this project is
+
 A browser extension + web dashboard that acts as a **git context assistant** — generates commit messages, PR titles/descriptions, branch names, code review summaries, release notes, and changelog entries using AI.
 
 ## Monorepo structure
+
 ```
 apps/api                  → NestJS backend (TypeScript)
 apps/web                  → React web dashboard (Vite + TanStack Router + shadcn/ui)
@@ -13,6 +15,7 @@ packages/api-client       → Shared axios client + TanStack Query hooks factory
 ```
 
 ## Tech stack
+
 - **Backend**: NestJS, TypeORM, PostgreSQL, Redis (Upstash), Passport.js, JWT
 - **Frontend**: React 19, TanStack Router, TanStack Query, shadcn/ui, Tailwind CSS
 - **AI Providers**: Google Gemini Flash (default free tier), Anthropic Claude Haiku, OpenAI GPT-4o mini
@@ -23,6 +26,7 @@ packages/api-client       → Shared axios client + TanStack Query hooks factory
 ## Key conventions
 
 ### Backend (`apps/api`)
+
 - **Never** use `synchronize: true` — all DB changes go through TypeORM migrations
 - Generate migration: `pnpm migration:generate -- -n MigrationName` (from `apps/api`)
 - Run migrations: `pnpm migration:run` (from `apps/api`)
@@ -35,6 +39,7 @@ packages/api-client       → Shared axios client + TanStack Query hooks factory
 - Provider keys encrypted with AES-256-GCM → `users.encryptedApiKey` + `users.apiKeyIv`
 
 ### Frontend — web (`apps/web`) and extension popup (`apps/extension/src/`)
+
 - File-based routing via **TanStack Router** — routes in `src/routes/`
 - UI components from **shadcn/ui**: `npx shadcn@latest add <component>`
 - Shared types imported from `@gitpilot/shared-types`
@@ -42,6 +47,7 @@ packages/api-client       → Shared axios client + TanStack Query hooks factory
 - Web app uses `@gitpilot/api-client` (`packages/api-client`) for typed query hooks
 
 ### Extension-specific (`apps/extension`)
+
 - JWT stored in `chrome.storage.local` via `src/shared/auth.ts` — **never** `localStorage`
 - Content scripts in `src/content/` — built as IIFE bundles by `vite.config.ts`
 - **Two-world architecture for Azure DevOps**:
@@ -54,16 +60,20 @@ packages/api-client       → Shared axios client + TanStack Query hooks factory
 - Adding a new content script: add entry to the `for` loop in `vite.config.ts`, add to `manifest.json`
 
 ### Build
+
 ```bash
 cd apps/extension
 pnpm build        # builds popup (React), content scripts (IIFE), service worker (ESM), writes dist/manifest.json
 ```
+
 The `extensionPlugin` in `vite.config.ts` runs after the main popup build and compiles each content script separately. The manifest paths are rewritten to flat filenames (e.g. `azure.js`, `github.js`, `azure-main.js`).
 
 ---
 
 ## Auth flow
+
 Three paths, same JWT pair output:
+
 1. **Email/password** — `POST /auth/register` or `POST /auth/login`
 2. **GitHub OAuth** — optional shortcut on register/login page
 3. **OTT extension link** — logged-in web user clicks "Connect Extension" → `POST /auth/extension-token` → deep link `gitpilot://auth?token=...` → extension service worker exchanges via `POST /auth/exchange` → stores JWT in `chrome.storage.local`
@@ -71,23 +81,27 @@ Three paths, same JWT pair output:
 ---
 
 ## Generation types
+
 `commit` | `pr` | `branch` | `review-summary` | `release-notes` | `changelog`
 
-Each type has its own rate limit counter. Free tier: 20 req/day per type.
+Each type has its own rate limit counter. Free tier: 10 req/day per type.
 
 ---
 
 ## AI provider routing
+
 - Free users → Gemini Flash by default (cheapest)
 - BYOK users → their encrypted API key + preferred provider (Gemini / Claude / OpenAI)
 
 ---
 
 ## Environment
+
 Copy `apps/api/.env.example` → `apps/api/.env` and fill in values.
 Local dev requires Docker: `docker compose up -d` (Postgres 16 + Redis 7).
 
 ## Running locally
+
 ```bash
 pnpm install
 docker compose up -d
@@ -102,6 +116,7 @@ pnpm dev:extension  # watch mode → dist/ (load unpacked in Chrome)
 ## What's built
 
 ### Extension (`apps/extension`) — complete
+
 - `manifest.json` — MV3, host_permissions for github.com + dev.azure.com, scripting permission
 - `src/background/service-worker.ts` — OTT exchange, routes `GENERATE_*` messages to API, handles token refresh
 - `src/shared/auth.ts` — JWT read/write in `chrome.storage.local`
@@ -113,6 +128,7 @@ pnpm dev:extension  # watch mode → dist/ (load unpacked in Chrome)
 - `auth-callback.html` — handles the `gitpilot://` deep link redirect
 
 ### Web dashboard (`apps/web`) — partially scaffolded
+
 - Root layout + landing page
 - `/dashboard` route — usage stats, connect extension button
 - `/settings` route — BYOK key management
@@ -121,10 +137,12 @@ pnpm dev:extension  # watch mode → dist/ (load unpacked in Chrome)
 - `src/lib/queries.ts` — TanStack Query hooks (useProfile, useUsage)
 
 ### Shared packages
+
 - `packages/shared-types` — `UserProfile`, `UsageStats`, `GenerateRequest`, `GenerateResponse` DTOs
 - `packages/api-client` — `createApiClient(baseUrl)` factory, `createApiHooks(client)` TanStack Query factory
 
 ### Backend (`apps/api`) — entities + config only
+
 - `User` entity — id, email, passwordHash, githubId, plan, encryptedApiKey, apiKeyIv, preferredProvider
 - `UsageDaily` entity — userId, date, type, count
 - `GenerationHistory` entity — userId, type, provider, promptTokens, completionTokens, createdAt
@@ -137,6 +155,7 @@ pnpm dev:extension  # watch mode → dist/ (load unpacked in Chrome)
 ## TODO (build in this order)
 
 ### Backend
+
 1. **`AuthModule`** — endpoints: `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `GET /auth/github`, `GET /auth/github/callback`, `POST /auth/extension-token`, `POST /auth/exchange`
 2. **`UsersModule`** — `GET /users/me`, `PATCH /users/me`, `POST /users/byok` (encrypt + store key)
 3. **`RateLimitModule`** — Redis guard that checks + increments `rl:{userId}:{date}:{type}`; skip for BYOK
@@ -144,10 +163,12 @@ pnpm dev:extension  # watch mode → dist/ (load unpacked in Chrome)
 5. **`GenerateModule`** — one controller with endpoints for each generation type; applies rate limit guard; routes to correct provider
 
 ### Web dashboard
+
 6. Register + login pages (email/password + GitHub OAuth button)
 7. Wire "Connect Extension" button → calls `POST /auth/extension-token`, opens deep link
 
 ### Extension
+
 8. All API-facing flows already wired in service worker — unblock by shipping the backend
 
 ---

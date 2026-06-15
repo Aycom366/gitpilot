@@ -29,7 +29,7 @@ export function HomePage() {
   const { data: usage, isLoading } = useQuery(usageQueryOptions);
 
   const isByok = user?.tier === "byok";
-  const limit = usage?.limit ?? 20;
+  const limit = usage?.limit ?? 10;
 
   function handleLogout() {
     removeTokens();

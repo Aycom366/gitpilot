@@ -3,10 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { Button, FormInput, Badge } from "@gitpilot/ui";
-import {
-  usePutResource,
-  useDeleteResource,
-} from "../../hooks/use-api";
+import { usePutResource, useDeleteResource } from "../../hooks/use-api";
 import { queryKeys } from "../../lib/query-client";
 import { parseError } from "../../lib/utils";
 import type { UserProfile, ProviderName } from "@gitpilot/shared-types";
@@ -60,14 +57,16 @@ export function ByokSection({ user, effectiveProvider }: ByokSectionProps) {
   return (
     <SectionCard
       title='Bring Your Own API Key'
-      description='Bypass the 20/day limit by using your own provider key'
+      description='Bypass the 10/day limit by using your own provider key'
     >
       <div className='flex items-center gap-2 mb-4'>
         <Badge variant={user.tier === "byok" ? "default" : "outline"}>
           {user.tier === "byok" ? "BYOK active" : "Free tier"}
         </Badge>
         {user.hasApiKey && (
-          <span className='text-xs text-zinc-500'>A key is currently saved</span>
+          <span className='text-xs text-zinc-500'>
+            A key is currently saved
+          </span>
         )}
       </div>
 

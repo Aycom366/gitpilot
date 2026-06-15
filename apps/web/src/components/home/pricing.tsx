@@ -8,7 +8,7 @@ const pricingTiers = [
     price: "$0",
     description: "For individuals getting started",
     features: [
-      "20 generations / day per type",
+      "10 generations / day per type",
       "Commit messages",
       "PR titles & descriptions",
       "Branch name suggestions",

@@ -152,7 +152,7 @@ export class GenerateService {
   async getUsage(user: User) {
     return {
       tier: user.tier,
-      limit: 20,
+      limit: 10,
       today: await this.rateLimitService.getUsageToday(user.id),
     };
   }
@@ -188,7 +188,7 @@ export class GenerateService {
     );
     if (!allowed) {
       throw new RateLimitExceededException(
-        `Daily limit of 20 ${type} generations reached. Resets at midnight UTC.`,
+        `Daily limit of 10 ${type} generations reached. Resets at midnight UTC.`,
       );
     }
   }

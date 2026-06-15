@@ -43,7 +43,7 @@ export function Hero() {
       </div>
 
       <p className='mt-4 text-sm text-zinc-600'>
-        20 free generations per day · No credit card required
+        10 free generations per day · No credit card required
       </p>
 
       <div className='mt-16 w-full max-w-2xl overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 text-left shadow-2xl shadow-violet-950/30'>

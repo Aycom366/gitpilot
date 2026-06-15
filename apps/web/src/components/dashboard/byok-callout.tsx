@@ -8,7 +8,7 @@ export function ByokCallout() {
           Unlock unlimited generations
         </p>
         <p className='text-xs text-zinc-400 mt-0.5'>
-          Add your own API key in Settings to bypass the 20/day limit.
+          Add your own API key in Settings to bypass the 10/day limit.
         </p>
       </div>
       <Link

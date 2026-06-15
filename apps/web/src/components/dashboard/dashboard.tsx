@@ -10,7 +10,7 @@ export function Dashboard() {
   const { data: usage, isLoading: usageLoading } = useQuery(usageQueryOptions);
 
   const isByok = usage?.tier === "byok" || user?.tier === "byok";
-  const limit = usage?.limit ?? 20;
+  const limit = usage?.limit ?? 10;
 
   return (
     <div className='max-w-5xl mx-auto px-6 py-10'>
