@@ -1,3 +1,5 @@
+import './instrument';
+
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import morgan from 'morgan';
@@ -6,6 +8,8 @@ import { config } from './config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
   app.use(morgan('dev'));
 
@@ -23,21 +27,12 @@ async function bootstrap() {
   });
   app.enableShutdownHooks();
 
-  console.log('ENV CHECK:', {
-    PORT: config.port,
-    DATABASE_URL: config.databaseUrl ? '[set]' : '[missing]',
-    REDIS_URL: config.redisUrl,
-    JWT_SECRET: config.jwtSecret ? '[set]' : '[missing]',
-    GOOGLE_GENERATIVE_AI_API_KEY: config.googleApiKey ? '[set]' : '[missing]',
-    WEB_URL: config.webUrl,
-  });
-
   await app.listen(process.env.PORT ?? 3000);
 }
 
 bootstrap()
   .then(() => {
-    console.info('Server is running');
+    console.info(`Server is running on port ${config.port}`);
   })
   .catch((error) => {
     console.error(error);

@@ -23,4 +23,5 @@ export const config = {
   webUrl: process.env.WEB_URL!,
   bullBoardUser: process.env.BULL_BOARD_USER!,
   bullBoardPassword: process.env.BULL_BOARD_PASSWORD!,
+  sentryDsn: process.env.SENTRY_DSN!,
 };
