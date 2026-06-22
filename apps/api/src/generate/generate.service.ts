@@ -59,7 +59,7 @@ export class GenerateService {
       maxTokens: 300,
     });
 
-    void this.enqueue(AnalyticsJobs.LOG_GENERATION, {
+    this.enqueue(AnalyticsJobs.LOG_GENERATION, {
       userId: user.id,
       type: 'commit',
       provider: providerName,
@@ -99,7 +99,7 @@ export class GenerateService {
       maxTokens: 1200,
     });
 
-    void this.enqueue(AnalyticsJobs.LOG_GENERATION, {
+    this.enqueue(AnalyticsJobs.LOG_GENERATION, {
       userId: user.id,
       type: 'pr',
       provider: providerName,

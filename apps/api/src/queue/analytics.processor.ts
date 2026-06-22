@@ -51,24 +51,16 @@ export class AnalyticsProcessor extends WorkerHost {
 
   private async handleUpsertUsage(data: UpsertUsageJob): Promise<void> {
     try {
-      await this.usageRepo
-        .createQueryBuilder()
-        .insert()
-        .into(UsageDaily)
-        .values({
-          user: { id: data.userId },
-          date: data.date,
-          type: data.type,
-          requestCount: 1,
-        })
-        .orUpdate(['requestCount'], ['user', 'date', 'type'], {
-          skipUpdateIfNoValuesChanged: false,
-          upsertType: 'on-conflict-do-update',
-        })
-        .execute();
+      await this.usageRepo.query(
+        `INSERT INTO usage_daily ("userId", "date", "type", "requestCount")
+         VALUES ($1, $2, $3, 1)
+         ON CONFLICT ("userId", "date", "type")
+         DO UPDATE SET "requestCount" = usage_daily."requestCount" + 1`,
+        [data.userId, data.date, data.type],
+      );
     } catch (err) {
       this.logger.error('Failed to upsert usage', err);
-      throw err; // BullMQ will retry
+      throw err;
     }
   }
 

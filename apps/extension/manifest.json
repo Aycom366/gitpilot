@@ -3,7 +3,7 @@
   "name": "GitPilot",
   "version": "0.1.0",
   "description": "AI-powered commit messages and PR descriptions",
-  "permissions": ["storage", "activeTab", "scripting"],
+  "permissions": ["storage"],
   "host_permissions": ["https://github.com/*", "https://dev.azure.com/*"],
   "background": {
     "service_worker": "src/background/service-worker.ts",

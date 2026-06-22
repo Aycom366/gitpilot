@@ -21,4 +21,6 @@ export const config = {
   encryptionKey: process.env.ENCRYPTION_KEY,
   extensionId: process.env.EXTENSION_ID!,
   webUrl: process.env.WEB_URL!,
+  bullBoardUser: process.env.BULL_BOARD_USER!,
+  bullBoardPassword: process.env.BULL_BOARD_PASSWORD!,
 };
