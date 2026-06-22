@@ -10,9 +10,13 @@ import { GenerateModule } from './generate/generate.module';
 import { AppDataSource } from './database/data-source';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { AiExceptionFilter } from './common/filters/ai-exception.filter';
+import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot(AppDataSource.options),
     RedisModule,
@@ -22,7 +26,14 @@ import { AiExceptionFilter } from './common/filters/ai-exception.filter';
     AuthModule,
     GenerateModule,
   ],
+  controllers: [AppController],
+
   providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: SentryGlobalFilter,
+    },
     {
       provide: APP_FILTER,
       useClass: AiExceptionFilter,

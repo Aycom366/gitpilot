@@ -37,6 +37,7 @@
     "@nestjs/passport": "^11.0.0",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/typeorm": "^11.0.0",
+    "@sentry/nestjs": "^10.59.0",
     "ai": "^4.3.16",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.53.0",
