@@ -78,7 +78,7 @@ export function ExtensionSection() {
               {ottMutation.isPending ? "Generating link…" : "Connect Extension"}
             </Button>
             <a
-              href='https://chromewebstore.google.com'
+              href='https://chromewebstore.google.com/detail/gitpilot/ljbfncdhembpjmfhicbghnnkioecegmb'
               target='_blank'
               rel='noopener noreferrer'
               className='flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors'

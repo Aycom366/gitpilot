@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Button } from "@gitpilot/ui";
+import { Button, buttonVariants } from "@gitpilot/ui";
 import { Chrome } from "lucide-react";
 
 export function CTA() {
@@ -17,10 +17,15 @@ export function CTA() {
             Join developers who stopped wasting time on commit messages.
           </p>
           <div className='mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center'>
-            <Button size='lg' className='gap-2'>
+            <a
+              href='https://chromewebstore.google.com/detail/gitpilot/ljbfncdhembpjmfhicbghnnkioecegmb'
+              target='_blank'
+              rel='noopener noreferrer'
+              className={buttonVariants({ size: 'lg', className: 'gap-2' })}
+            >
               <Chrome className='h-4 w-4' />
               Add to Chrome
-            </Button>
+            </a>
             <Link to='/auth/register'>
               <Button variant='outline' size='lg'>
                 Create free account

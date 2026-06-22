@@ -13,6 +13,12 @@ const steps = [
   },
   {
     step: "03",
+    title: "Link the extension",
+    description:
+      'In your dashboard, click "Connect Extension" — a one-time link pairs the extension to your account.',
+  },
+  {
+    step: "04",
     title: "Open GitHub and generate",
     description:
       "A ✨ button appears on commit and PR pages. Click it and your message is written.",
@@ -30,7 +36,7 @@ export function HowItWorks() {
           </h2>
         </div>
 
-        <div className='grid gap-8 md:grid-cols-3'>
+        <div className='grid gap-8 md:grid-cols-4'>
           {steps.map((step, i) => (
             <div
               key={step.step}

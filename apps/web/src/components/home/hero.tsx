@@ -1,4 +1,4 @@
-import { Button, Badge } from "@gitpilot/ui";
+import { Button, Badge, buttonVariants } from "@gitpilot/ui";
 import { ChevronRight, Star, Chrome } from "lucide-react";
 
 export function Hero() {
@@ -26,10 +26,15 @@ export function Hero() {
       </p>
 
       <div className='mt-10 flex flex-col items-center gap-4 sm:flex-row'>
-        <Button size='lg' className='gap-2'>
+        <a
+          href='https://chromewebstore.google.com/detail/gitpilot/ljbfncdhembpjmfhicbghnnkioecegmb'
+          target='_blank'
+          rel='noopener noreferrer'
+          className={buttonVariants({ size: 'lg', className: 'gap-2' })}
+        >
           <Chrome className='h-4 w-4' />
           Add to Chrome — it's free
-        </Button>
+        </a>
         <a
           href='https://github.com/aycom3/gitpilot'
           target='_blank'
