@@ -1,5 +1,5 @@
 FROM node:22.13-slim AS base
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN npm install -g pnpm@9
 WORKDIR /app
 
 # Copy workspace manifests first (better layer caching)
