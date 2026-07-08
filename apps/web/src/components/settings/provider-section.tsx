@@ -64,7 +64,7 @@ export function ProviderSection({
                 <div className='h-2 w-2 rounded-full bg-violet-500' />
               )}
             </div>
-            <div>
+            <div className='min-w-0'>
               <p className='text-sm font-medium text-white'>{label}</p>
               <p className='text-xs text-zinc-500'>{description}</p>
             </div>

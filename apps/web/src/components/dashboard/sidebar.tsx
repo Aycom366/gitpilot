@@ -2,8 +2,9 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import {
   GitCommitHorizontal,
   LayoutDashboard,
-  Settings,
   LogOut,
+  Settings,
+  X,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getRefreshToken, removeTokens } from "../../lib/auth";
@@ -14,7 +15,12 @@ const navItems = [
   { to: "/dashboard/settings", label: "Settings", icon: Settings },
 ] as const;
 
-export function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -42,9 +48,10 @@ export function Sidebar() {
   }
 
   return (
-    <aside className='w-60 shrink-0 flex flex-col bg-zinc-900 border-r border-zinc-800'>
+    <>
       <Link
         to='/'
+        onClick={onNavigate}
         className='h-16 flex items-center gap-2 px-5 border-b border-zinc-800'
       >
         <GitCommitHorizontal className='h-5 w-5 text-violet-400' />
@@ -56,6 +63,7 @@ export function Sidebar() {
           <Link
             key={to}
             to={to}
+            onClick={onNavigate}
             activeOptions={
               "exact" in rest && rest.exact ? { exact: true } : undefined
             }
@@ -77,7 +85,10 @@ export function Sidebar() {
 
       <div className='p-3 border-t border-zinc-800'>
         <button
-          onClick={handleLogout}
+          onClick={() => {
+            onNavigate?.();
+            handleLogout();
+          }}
           disabled={logoutMutation.isPending}
           className='w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors'
         >
@@ -85,6 +96,38 @@ export function Sidebar() {
           Log out
         </button>
       </div>
-    </aside>
+    </>
+  );
+}
+
+export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
+  return (
+    <>
+      <aside className='hidden md:flex w-60 shrink-0 flex-col bg-zinc-900 border-r border-zinc-800'>
+        <SidebarContent />
+      </aside>
+
+      {mobileOpen && (
+        <div className='fixed inset-0 z-50 md:hidden'>
+          <button
+            type='button'
+            aria-label='Close navigation menu'
+            className='absolute inset-0 bg-black/60'
+            onClick={onMobileClose}
+          />
+          <aside className='relative flex h-full w-72 max-w-[85vw] flex-col bg-zinc-900 shadow-xl'>
+            <button
+              type='button'
+              aria-label='Close navigation menu'
+              onClick={onMobileClose}
+              className='absolute right-3 top-4 rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors'
+            >
+              <X className='h-5 w-5' />
+            </button>
+            <SidebarContent onNavigate={onMobileClose} />
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

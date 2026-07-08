@@ -45,16 +45,17 @@ export function ProfileSection({ user }: ProfileSectionProps) {
             label='Full name'
             placeholder='Your name'
           />
-          <div className='flex items-center gap-3'>
+          <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3'>
             <Button
               form='profile-form'
               type='submit'
               size='sm'
               disabled={profileMutation.isPending}
+              className='w-fit'
             >
               {profileMutation.isPending ? "Saving…" : "Save changes"}
             </Button>
-            <span className='text-xs text-zinc-500'>{user.email}</span>
+            <span className='text-xs text-zinc-500 break-all'>{user.email}</span>
           </div>
         </form>
       </FormProvider>

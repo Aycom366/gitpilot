@@ -59,7 +59,7 @@ export function ByokSection({ user, effectiveProvider }: ByokSectionProps) {
       title='Bring Your Own API Key'
       description='Bypass the 10/day limit by using your own provider key'
     >
-      <div className='flex items-center gap-2 mb-4'>
+      <div className='mb-4 flex flex-wrap items-center gap-2'>
         <Badge variant={user.tier === "byok" ? "default" : "outline"}>
           {user.tier === "byok" ? "BYOK active" : "Free tier"}
         </Badge>
@@ -82,12 +82,13 @@ export function ByokSection({ user, effectiveProvider }: ByokSectionProps) {
             type='password'
             placeholder='sk-…'
           />
-          <div className='flex items-center gap-2'>
+          <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
             <Button
               form='apikey-form'
               type='submit'
               size='sm'
               disabled={apiKeyMutation.isPending}
+              className='w-fit'
             >
               {apiKeyMutation.isPending ? "Saving…" : "Save key"}
             </Button>
@@ -98,7 +99,7 @@ export function ByokSection({ user, effectiveProvider }: ByokSectionProps) {
                 size='sm'
                 disabled={deleteApiKeyMutation.isPending}
                 onClick={onDeleteApiKey}
-                className='text-red-400 hover:text-red-300 gap-1.5'
+                className='w-fit text-red-400 hover:text-red-300 gap-1.5'
               >
                 <Trash2 className='h-3.5 w-3.5' />
                 {deleteApiKeyMutation.isPending ? "Removing…" : "Remove key"}

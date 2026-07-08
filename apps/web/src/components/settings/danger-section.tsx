@@ -11,7 +11,7 @@ export function DangerSection() {
   const ready = confirmText.toLowerCase() === CONFIRM_PHRASE;
 
   return (
-    <section className="rounded-xl border border-red-900/50 bg-red-950/20 p-6">
+    <section className="rounded-xl border border-red-900/50 bg-red-950/20 p-4 sm:p-6">
       <div className="flex items-center gap-2 mb-1">
         <AlertTriangle className="h-4 w-4 text-red-400" />
         <h2 className="text-sm font-semibold text-red-400 uppercase tracking-wide">
@@ -71,11 +71,11 @@ export function DangerSection() {
             </p>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <button
               onClick={() => deleteAccount()}
               disabled={!ready || isPending}
-              className="flex items-center gap-2 rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="flex w-fit items-center gap-2 rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <Trash2 className="h-4 w-4" />
               {isPending ? "Deleting…" : "Yes, delete my account"}
@@ -86,7 +86,7 @@ export function DangerSection() {
                 setConfirmText("");
               }}
               disabled={isPending}
-              className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 hover:text-zinc-200 hover:border-zinc-600 transition-colors"
+              className="w-fit rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 hover:text-zinc-200 hover:border-zinc-600 transition-colors"
             >
               Cancel
             </button>

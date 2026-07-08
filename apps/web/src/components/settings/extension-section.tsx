@@ -37,8 +37,8 @@ export function ExtensionSection() {
             A link was opened. If the extension didn't respond, copy it
             manually:
           </p>
-          <div className='flex items-center gap-2 rounded-lg bg-zinc-800 px-3 py-2'>
-            <code className='flex-1 text-xs text-zinc-300 truncate'>
+          <div className='flex min-w-0 items-center gap-2 rounded-lg bg-zinc-800 px-3 py-2'>
+            <code className='min-w-0 flex-1 truncate text-xs text-zinc-300'>
               {ottDeepLink}
             </code>
             <button
@@ -69,11 +69,12 @@ export function ExtensionSection() {
             Make sure you have the GitPilot extension installed in Chrome, then
             click below.
           </p>
-          <div className='flex items-center gap-3'>
+          <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
             <Button
               size='sm'
               disabled={ottMutation.isPending}
               onClick={onConnectExtension}
+              className='w-fit'
             >
               {ottMutation.isPending ? "Generating link…" : "Connect Extension"}
             </Button>
@@ -81,7 +82,7 @@ export function ExtensionSection() {
               href='https://chromewebstore.google.com/detail/gitpilot/ljbfncdhembpjmfhicbghnnkioecegmb'
               target='_blank'
               rel='noopener noreferrer'
-              className='flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors'
+              className='flex w-fit items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors'
             >
               <ExternalLink className='h-3 w-3' />
               Get extension
