@@ -4,6 +4,7 @@ import { config } from './config';
 
 Sentry.init({
   dsn: config.sentryDsn,
+  enabled: process.env.NODE_ENV !== 'development',
 
   // Send structured logs to Sentry
   enableLogs: true,
