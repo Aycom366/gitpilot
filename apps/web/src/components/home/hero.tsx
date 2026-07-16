@@ -30,13 +30,13 @@ export function Hero() {
           href='https://chromewebstore.google.com/detail/gitpilot/ljbfncdhembpjmfhicbghnnkioecegmb'
           target='_blank'
           rel='noopener noreferrer'
-          className={buttonVariants({ size: 'lg', className: 'gap-2' })}
+          className={buttonVariants({ size: "lg", className: "gap-2" })}
         >
           <Chrome className='h-4 w-4' />
           Add to Chrome — it's free
         </a>
         <a
-          href='https://github.com/aycom3/gitpilot'
+          href='https://github.com/aycom366/gitpilot'
           target='_blank'
           rel='noopener noreferrer'
         >
